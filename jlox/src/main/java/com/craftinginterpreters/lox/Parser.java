@@ -101,8 +101,8 @@ class Parser {
     private Expr unary() {
         if (match(MINUS, BANG)) {
             Token operator = previous();
-            Expr expr = unary();
-            return new Expr.Unary(operator, expr);
+            Expr right = unary();
+            return new Expr.Unary(operator, right);
         }
         else {
             return primary();

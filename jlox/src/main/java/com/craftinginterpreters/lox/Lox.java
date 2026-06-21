@@ -13,7 +13,9 @@ import static main.java.com.craftinginterpreters.lox.TokenType.EOF;
 
 class Lox {
 
+    private static final Interpreter interpreter = new Interpreter();
     private static boolean hadError = false;
+    private static boolean hadRuntimeError = false;
 
     static void main(String[] args) throws IOException {
         if (args.length > 1) {
@@ -46,6 +48,13 @@ class Lox {
         hadError = true;
     }
 
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
+
+    }
+
     static void runFile(String filePath) throws IOException {
         String source = Files.readString(Path.of(filePath));
         run(source);
@@ -61,6 +70,7 @@ class Lox {
             }
             run(line);
             hadError = false;
+            hadRuntimeError = false;
         }
     }
 
@@ -84,6 +94,10 @@ class Lox {
         System.out.println("AST:");
         System.out.println(new AstPrinter().print(expression));
 
+        System.out.print("Result: ");
+        interpreter.interpret(expression);
+
     }
+
 }
 

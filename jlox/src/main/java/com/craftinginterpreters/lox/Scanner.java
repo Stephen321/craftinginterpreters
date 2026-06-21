@@ -108,23 +108,24 @@ class Scanner {
 
 
     private void string() {
-       while (peek() != '"' && !isAtEnd()) {
-           if (peek() == '\n') {
-               line++;
-           }
-          advance();
-       }
-       if (isAtEnd()){
-           Lox.error(line, "Unterminated string");
-           return;
-       }
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') {
+                line++;
+            }
+            advance();
+        }
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string");
+            return;
+        }
 
-       // the closing "
-       advance();
+        // the closing "
+        advance();
 
-       // without surrounding "
-       String literal = source.substring(start + 1, current - 1);
-       addToken(STRING, literal);
+        // without surrounding "
+        String lexume = getLexume();
+        String literal = lexume.substring(1, lexume.length() - 1);
+        addToken(STRING, lexume, literal);
     }
 
     private void number() {
