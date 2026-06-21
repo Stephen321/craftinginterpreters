@@ -24,7 +24,30 @@ class Parser {
     }
 
     private Expr expression() {
-        return equality();
+        return comma();
+    }
+
+    private Expr comma() {
+        Expr expr = conditional();
+
+        while (match(COMMA)) {
+            Token operator = previous();
+            Expr right = conditional();
+            expr = new Expr.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr conditional() {
+        Expr expr = equality();
+        if (match(QUESTION)) {
+            Expr then = comma();
+            consume(COLON, "Expect ':' after expression");
+            Expr otherwise = conditional();
+            return new Expr.Conditional(expr, then, otherwise);
+        }
+        return expr;
     }
 
     private Expr equality() {
@@ -105,6 +128,34 @@ class Parser {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression");
             return new Expr.Grouping(expr);
+        }
+
+        // error productions/
+        // TODO: not sure if the return null is correct
+        if (match(COMMA)) {
+            ParseError err = error(previous(), "Missing left operand");
+            comma();
+            throw err;
+        }
+        if (match(EQUAL_EQUAL, BANG_EQUAL)) {
+            ParseError err = error(previous(), "Missing left operand");
+            equality();
+            throw err;
+        }
+        if (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+            ParseError err = error(previous(), "Missing left operand");
+            comparison();
+            throw err;
+        }
+        if (match(PLUS)) {
+            ParseError err = error(previous(), "Missing left operand");
+            term();
+            throw err;
+        }
+        if (match(STAR, SLASH)) {
+            ParseError err = error(previous(), "Missing left operand");
+            factor();
+            throw err;
         }
 
         throw error(peek(), "Expect expression");

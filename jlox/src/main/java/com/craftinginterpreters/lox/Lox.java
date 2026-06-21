@@ -60,6 +60,7 @@ class Lox {
                 break;
             }
             run(line);
+            hadError = false;
         }
     }
 
@@ -69,20 +70,20 @@ class Lox {
         Parser parser = new Parser(tokens);
         Expr expression = parser.parse();
 
-        // Stop if there was a sync error
-        if (hadError) {
-            return;
-        }
-
-
         System.out.println("Tokens:");
         for (Token token : tokens) {
             System.out.print("{" + token + "} ");
         }
         System.out.println();
 
+        // Stop if there was a sync error
+        if (hadError) {
+            return;
+        }
+
         System.out.println("AST:");
         System.out.println(new AstPrinter().print(expression));
+
     }
 }
 

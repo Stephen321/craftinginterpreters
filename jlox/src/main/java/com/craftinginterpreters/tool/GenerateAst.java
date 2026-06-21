@@ -9,13 +9,21 @@ import java.util.List;
 /*
 Grammar
 
-expression     → equality
-equality       → comparison (("== | "!= comparison )*
+expression     → comma
+comma          → conditional ("," conditional)*
+conditional    → equality ("?" comma ":" conditional)?
+equality       → comparison (("==" | "!=" comparison )*
 comparison     → term ((">" | ">=" | "<" | "<=") term )*
 term           → factor (("+" | "-") factor )*
 factor         → unary (("*" | "/") unary )*
 unary          → ("-" | "!") unary | primary
-primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" |
+// error productions
+                "," comma |
+                ("==", "!=) equality |
+                (">" | ">=" | "<" | "<=") comparison |
+                "+" term |
+                ("*" | "/") factor
  */
 
 public class GenerateAst {
@@ -30,7 +38,8 @@ public class GenerateAst {
                 "Literal    : Object value",
                 "Grouping   : Expr expression",
                 "Unary      : Token operator, Expr expression",
-                "Binary     : Expr left, Token operator, Expr right"
+                "Binary     : Expr left, Token operator, Expr right",
+                "Conditional : Expr condition, Expr then, Expr otherwise"
                 ));
     }
 
