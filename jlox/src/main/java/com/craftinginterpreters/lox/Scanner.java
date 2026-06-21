@@ -194,7 +194,8 @@ class Scanner {
     }
 
     private void addToken(TokenType tokenType) {
-        addToken(tokenType, null);
+        String lexume = getLexume();
+        addToken(tokenType, lexume);
     }
 
     private void addToken(TokenType tokenType, Object literal) {

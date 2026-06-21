@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static main.java.com.craftinginterpreters.lox.TokenType.EOF;
+
 
 class Lox {
 
@@ -26,21 +28,30 @@ class Lox {
         }
     }
 
-    public static void error(int line, String message){
+    static void error(int line, String message){
         report(line, "", message);
     }
 
-    public static void report(int line, String where, String message) {
+    static void error(Token token, String message) {
+        if (token.type == EOF) {
+            report(token.line, " at end", message);
+        }
+        else {
+            report(token.line, " at '" + token.lexume + "'", message);
+        }
+    }
+
+    static void report(int line, String where, String message) {
         System.err.println("[line " + line + "] Error" + where + ": " + message);
         hadError = true;
     }
 
-    public static void runFile(String filePath) throws IOException {
+    static void runFile(String filePath) throws IOException {
         String source = Files.readString(Path.of(filePath));
         run(source);
     }
 
-    public static void runPrompt() throws IOException {
+    static void runPrompt() throws IOException {
         InputStreamReader stream = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(stream);
         while (true) {
@@ -55,10 +66,23 @@ class Lox {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parse();
 
-        for (Token token : tokens) {
-            System.out.println(token);
+        // Stop if there was a sync error
+        if (hadError) {
+            return;
         }
+
+
+        System.out.println("Tokens:");
+        for (Token token : tokens) {
+            System.out.print("{" + token + "} ");
+        }
+        System.out.println();
+
+        System.out.println("AST:");
+        System.out.println(new AstPrinter().print(expression));
     }
 }
 
