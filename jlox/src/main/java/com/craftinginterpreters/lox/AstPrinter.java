@@ -85,6 +85,10 @@ class AstPrinter implements Expr.Visitor<String>,
     }
 
     // statements
+    @Override
+    public String visitVarStmt(Stmt.Var stmt) {
+        return bracketize("var " + stmt.name.lexume + " = ", stmt.initializer);
+    }
 
     @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
@@ -97,18 +101,24 @@ class AstPrinter implements Expr.Visitor<String>,
     }
 
     @Override
-    public String visitVarStmt(Stmt.Var stmt) {
-        return bracketize("var " + stmt.name.lexume + " = ", stmt.initializer);
+    public String visitBlockStmt(Stmt.Block stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<{ block");
+        for (Stmt statement : stmt.statements) {
+            builder.append("\n" + statement.accept(this));
+        }
+        builder.append("\n end block}>");
+        return builder.toString();
     }
 
     private String bracketize(String name, Expr expr) {
         if (expr == null) {
             return "<null>;";
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("<").append(name);
-        builder.append(expr.accept(this));
-        builder.append(" ;>");
-        return builder.toString();
+        Object value = expr.accept(this);
+        if (value != null && expr instanceof Expr.Literal && ((Expr.Literal)expr).value instanceof String) {
+            value = "\"" + value + "\"";
+        }
+        return "<" + name + value + " ;>";
     }
 }

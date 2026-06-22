@@ -39,6 +39,16 @@ class Parser {
         }
     }
 
+    private Stmt statement() {
+        if (match(PRINT)) {
+            return printStatement();
+        }
+        if (match(LEFT_BRACE)) {
+            return blockStatement();
+        }
+        return expressionStatement();
+    }
+
     private Stmt varDecl() {
         Token name = consume(IDENTIFIER, "Expect variable name");
         Expr initializer = null;
@@ -47,13 +57,6 @@ class Parser {
         }
         consume(SEMICOLON, "Missing ; at end of var statement");
         return new Stmt.Var(name, initializer);
-    }
-
-    private Stmt statement() {
-        if (match(PRINT)) {
-            return printStatement();
-        }
-        return expressionStatement();
     }
 
     private Stmt expressionStatement() {
@@ -66,6 +69,19 @@ class Parser {
         Expr expression = expression();
         consume(SEMICOLON, "Expected ';' after value");
         return new Stmt.Print(expression);
+    }
+
+    private Stmt blockStatement() {
+        return new Stmt.Block(block());
+    }
+
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+        consume(RIGHT_BRACE, "Expect '}' after block");
+        return statements;
     }
 
     private Expr expression() {

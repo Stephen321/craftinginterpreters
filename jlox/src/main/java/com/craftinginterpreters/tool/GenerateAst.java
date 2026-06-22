@@ -9,12 +9,17 @@ import java.util.List;
 /*
 Grammar
 
+// statements
 program        → declaration* "EOF"
 declaration    → varDecl | statement
+statement      → exprStmt | printStmt | blockStmt
+
 varDecl        → "var" IDENTIFIER ("=" expression)? ";"
-statement      → exprStmt | printStmt
 exprStmt       → expression ";"
 printStmt      → "print" expression ";"
+blockStmt      → "{" declaration* "}"
+
+// expressions
 expression     → comma
 comma          → assignment ("," assignment)*
 assignment     → IDENTIFIER "=" assignment | conditional
@@ -54,9 +59,11 @@ public class GenerateAst {
                 "Assign      : Token name, Expr value"
                 ));
         defineAst(outputDir, "Stmt", Arrays.asList(
+                "Var         : Token name, Expr initializer",
                 "Expression  : Expr expression",
                 "Print       : Expr expression",
-                "Var         : Token name, Expr initializer"
+                "Block       : List<Stmt> statements"
+
         ));
     }
 
