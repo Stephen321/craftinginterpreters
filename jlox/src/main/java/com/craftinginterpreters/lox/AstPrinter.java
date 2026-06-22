@@ -1,7 +1,11 @@
 package main.java.com.craftinginterpreters.lox;
 
 
-class AstPrinter implements Expr.Visitor<String> {
+import java.util.Arrays;
+import java.util.List;
+
+class AstPrinter implements Expr.Visitor<String>,
+                            Stmt.Visitor<String> {
 
     static void main() {
        Expr expression = new Expr.Binary(
@@ -14,11 +18,24 @@ class AstPrinter implements Expr.Visitor<String> {
                        new Expr.Literal(45.67)
                )
        );
-       System.out.print(new AstPrinter().print(expression));
+       Stmt stmt = new Stmt.Print(expression);
+       System.out.print(new AstPrinter().print(stmt));
     }
 
     String print(Expr expr) {
         return expr.accept(this);
+    }
+
+    String print(Stmt stmt) {
+        return print(Arrays.asList(stmt));
+    }
+
+    String print(List<Stmt> statements) {
+        StringBuilder builder = new StringBuilder();
+        for (Stmt stmt : statements) {
+            builder.append("\n").append(stmt.accept(this));
+        }
+        return builder.toString();
     }
 
     @Override
@@ -46,6 +63,16 @@ class AstPrinter implements Expr.Visitor<String> {
         return parenthesize("?", conditional.condition, conditional.then, conditional.otherwise);
     }
 
+    @Override
+    public String visitIdentifierExpr(Expr.Identifier expr) {
+        return "<" + expr.name.lexume + ">";
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return parenthesize("= " + expr.name.lexume, expr.value);
+    }
+
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
         builder.append("(").append(name);
@@ -54,6 +81,34 @@ class AstPrinter implements Expr.Visitor<String> {
             builder.append(expr.accept(this));
         }
         builder.append(")");
+        return builder.toString();
+    }
+
+    // statements
+
+    @Override
+    public String visitExpressionStmt(Stmt.Expression stmt) {
+        return bracketize("expression ", stmt.expression);
+    }
+
+    @Override
+    public String visitPrintStmt(Stmt.Print stmt) {
+        return bracketize("print ", stmt.expression);
+    }
+
+    @Override
+    public String visitVarStmt(Stmt.Var stmt) {
+        return bracketize("var " + stmt.name.lexume + " = ", stmt.initializer);
+    }
+
+    private String bracketize(String name, Expr expr) {
+        if (expr == null) {
+            return "<null>;";
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("<").append(name);
+        builder.append(expr.accept(this));
+        builder.append(" ;>");
         return builder.toString();
     }
 }

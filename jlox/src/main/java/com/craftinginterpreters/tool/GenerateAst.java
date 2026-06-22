@@ -9,21 +9,31 @@ import java.util.List;
 /*
 Grammar
 
+program        → declaration* "EOF"
+declaration    → varDecl | statement
+varDecl        → "var" IDENTIFIER ("=" expression)? ";"
+statement      → exprStmt | printStmt
+exprStmt       → expression ";"
+printStmt      → "print" expression ";"
 expression     → comma
-comma          → conditional ("," conditional)*
+comma          → assignment ("," assignment)*
+assignment     → IDENTIFIER "=" assignment | conditional
 conditional    → equality ("?" comma ":" conditional)?
 equality       → comparison (("==" | "!=" comparison )*
 comparison     → term ((">" | ">=" | "<" | "<=") term )*
 term           → factor (("+" | "-") factor )*
 factor         → unary (("*" | "/") unary )*
 unary          → ("-" | "!") unary | primary
-primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" |
+primary        → NUMBER | STRING | "true" | "false" | "nil" |
+                 "(" expression ")" | IDENTIFIER
 // error productions
                 "," comma |
                 ("==", "!=) equality |
                 (">" | ">=" | "<" | "<=") comparison |
                 "+" term |
                 ("*" | "/") factor
+
+// NOTE: assignment in C++ is in the same group as the Tenary
  */
 
 public class GenerateAst {
@@ -35,12 +45,19 @@ public class GenerateAst {
         String outputDir = args[0];
 
         defineAst(outputDir, "Expr", Arrays.asList(
-                "Literal    : Object value",
-                "Grouping   : Expr expression",
-                "Unary      : Token operator, Expr expression",
-                "Binary     : Expr left, Token operator, Expr right",
-                "Conditional : Expr condition, Expr then, Expr otherwise"
+                "Literal     : Object value",
+                "Grouping    : Expr expression",
+                "Unary       : Token operator, Expr expression",
+                "Binary      : Expr left, Token operator, Expr right",
+                "Conditional : Expr condition, Expr then, Expr otherwise",
+                "Identifier  : Token name",
+                "Assign      : Token name, Expr value"
                 ));
+        defineAst(outputDir, "Stmt", Arrays.asList(
+                "Expression  : Expr expression",
+                "Print       : Expr expression",
+                "Var         : Token name, Expr initializer"
+        ));
     }
 
     private static void defineAst(String outputDir, String baseName, List<String> types)  throws IOException {
@@ -74,7 +91,7 @@ public class GenerateAst {
         for (String type : types) {
             String className = type.split(":")[0].trim();
             writer.println("\t\tR visit" +  className + baseName +
-                    "(" + className + " " + className.toLowerCase() + ");");
+                    "(" + className + " " + baseName.toLowerCase() + ");");
         }
 
         writer.println("\t}");

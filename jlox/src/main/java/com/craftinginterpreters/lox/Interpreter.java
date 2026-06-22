@@ -1,35 +1,42 @@
 package main.java.com.craftinginterpreters.lox;
 
+import java.util.List;
+
 import static main.java.com.craftinginterpreters.lox.TokenType.*;
 
-class Interpreter implements Expr.Visitor<Object> {
-    
-    void interpret(Expr expression) {
+class Interpreter implements Expr.Visitor<Object>,
+                             Stmt.Visitor<Void> {
+
+    private final Environment environment = new Environment();
+
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt stmt : statements) {
+                execute(stmt);
+            }
         }
         catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
     }
 
+    // expressions
     @Override
-    public Object visitLiteralExpr(Expr.Literal literal) {
-        return literal.value;
+    public Object visitLiteralExpr(Expr.Literal expr) {
+        return expr.value;
     }
 
     @Override
-    public Object visitGroupingExpr(Expr.Grouping grouping) {
-        return evaluate(grouping.expression);
+    public Object visitGroupingExpr(Expr.Grouping expr) {
+        return evaluate(expr.expression);
     }
 
     @Override
-    public Object visitUnaryExpr(Expr.Unary unary) {
-        Object right = evaluate(unary.expression);
-        return switch (unary.operator.type) {
+    public Object visitUnaryExpr(Expr.Unary expr) {
+        Object right = evaluate(expr.expression);
+        return switch (expr.operator.type) {
             case MINUS -> {
-                checkNumberOperand(unary.operator, right);
+                checkNumberOperand(expr.operator, right);
                 yield -(double) right;
             }
             case BANG -> !isTruthy(right);
@@ -40,27 +47,27 @@ class Interpreter implements Expr.Visitor<Object> {
 
 
     @Override
-    public Object visitBinaryExpr(Expr.Binary binary) {
+    public Object visitBinaryExpr(Expr.Binary expr) {
         // TODO: evalutes both even if we know the checking of operands would fail
-        Object left = evaluate(binary.left);
-        Object right = evaluate(binary.right);
+        Object left = evaluate(expr.left);
+        Object right = evaluate(expr.right);
 
-        if (binary.operator.type == COMMA) {
+        if (expr.operator.type == COMMA) {
             return right;
         }
 
-        if (binary.operator.type == PLUS) {
+        if (expr.operator.type == PLUS) {
             if (left instanceof Double && right instanceof Double) {
                 return (double)left + (double)right;
             }
             if (left instanceof String && right instanceof String) {
                return (String)left + (String)right;
             }
-            throw new RuntimeError(binary.operator, "Operands must both be numbers or strings");
+            throw new RuntimeError(expr.operator, "Operands must both be numbers or strings");
         }
 
-        checkNumberOperands(binary.operator, left, right);
-        return switch (binary.operator.type) {
+        checkNumberOperands(expr.operator, left, right);
+        return switch (expr.operator.type) {
             case MINUS ->  (double)left - (double)right;
             case SLASH -> (double)left / (double)right;
             case STAR -> (double)left * (double)right;
@@ -71,9 +78,21 @@ class Interpreter implements Expr.Visitor<Object> {
 
 
     @Override
-    public Object visitConditionalExpr(Expr.Conditional conditional) {
-        Object condition = evaluate(conditional.condition);
-        return (isTruthy(condition)) ? evaluate(conditional.then) : evaluate(conditional.otherwise);
+    public Object visitConditionalExpr(Expr.Conditional expr) {
+        Object condition = evaluate(expr.condition);
+        return (isTruthy(condition)) ? evaluate(expr.then) : evaluate(expr.otherwise);
+    }
+
+    @Override
+    public Object visitIdentifierExpr(Expr.Identifier expr) {
+        return environment.get(expr.name);
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
 
     private Object evaluate(Expr expr) {
@@ -117,4 +136,35 @@ class Interpreter implements Expr.Visitor<Object> {
         }
         return value.toString();
     }
+
+    // statements
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+        environment.define(stmt.name.lexume, value);
+        return null;
+    }
+
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+
 }

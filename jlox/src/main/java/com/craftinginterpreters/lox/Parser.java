@@ -1,5 +1,6 @@
 package main.java.com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static main.java.com.craftinginterpreters.lox.TokenType.*;
@@ -14,13 +15,57 @@ class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(declaration());
+        }
+//        catch (ParseError error) {
+//            return null;
+//        }
+        return statements;
+    }
+
+    private Stmt declaration() {
         try {
-            return expression();
+            if (match(VAR)) {
+                return varDecl();
+            }
+            return statement();
         }
         catch (ParseError error) {
+            synchronize();
             return null;
         }
+    }
+
+    private Stmt varDecl() {
+        Token name = consume(IDENTIFIER, "Expect variable name");
+        Expr initializer = null;
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+        consume(SEMICOLON, "Missing ; at end of var statement");
+        return new Stmt.Var(name, initializer);
+    }
+
+    private Stmt statement() {
+        if (match(PRINT)) {
+            return printStatement();
+        }
+        return expressionStatement();
+    }
+
+    private Stmt expressionStatement() {
+        Expr expression = expression();
+        consume(SEMICOLON, "Expected ';' after expression");
+        return new Stmt.Expression(expression);
+    }
+
+    private Stmt printStatement() {
+        Expr expression = expression();
+        consume(SEMICOLON, "Expected ';' after value");
+        return new Stmt.Print(expression);
     }
 
     private Expr expression() {
@@ -28,12 +73,31 @@ class Parser {
     }
 
     private Expr comma() {
-        Expr expr = conditional();
+        Expr expr = assignment();
 
         while (match(COMMA)) {
             Token operator = previous();
-            Expr right = conditional();
+            Expr right = assignment();
             expr = new Expr.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr assignment() {
+        Expr expr = conditional();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+
+            if (expr instanceof Expr.Identifier identifier) {
+                Token name = identifier.name;
+                Expr value = assignment();
+                return new Expr.Assign(name, value);
+            }
+
+            // NOTE: reports, doesn't throw as not in a panic state where we need to sync
+            error(equals, "Invalid assignment target");
         }
 
         return expr;
@@ -128,6 +192,10 @@ class Parser {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression");
             return new Expr.Grouping(expr);
+        }
+
+        if (match(IDENTIFIER)) {
+            return new Expr.Identifier(previous());
         }
 
         // error productions/
