@@ -27,7 +27,7 @@ class Environment {
         }
 
         if (enclosing != null) {
-            enclosing.get(name);
+            enclosing.assign(name, value);
             return;
         }
 

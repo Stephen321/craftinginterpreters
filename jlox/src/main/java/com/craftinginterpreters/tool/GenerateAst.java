@@ -6,37 +6,51 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
+/* TODO
+- Once we have functions, we could simplify the language by tearing out the old print syntax and replacing it with a native function. But that would mean that examples early in the book wouldn’t run on the interpreter from later chapters and vice versa. So, for the book, I’ll leave it alone.
+ */
+
 /*
 Grammar
 
 // statements
-program        → declaration* "EOF"
-declaration    → varDecl | statement
-statement      → exprStmt | printStmt | blockStmt
+program        → declaration* "EOF" ;
+declaration    → varDecl | statement ;
+statement      → exprStmt | printStmt | blockStmt | ifStmt | whileStmt | forStmt;
 
-varDecl        → "var" IDENTIFIER ("=" expression)? ";"
-exprStmt       → expression ";"
-printStmt      → "print" expression ";"
-blockStmt      → "{" declaration* "}"
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+exprStmt       → expression ";" ;
+printStmt      → "print" expression ";" ;
+blockStmt      → "{" declaration* "}" ;
+ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
+whileStmt      →  "while" "(" expression ")" statement ;
+forStmt        →  "for" "(" ( varDecl | exprStmt | ";") expression? ";" expression? ")" statement ;
+
+
 
 // expressions
-expression     → comma
-comma          → assignment ("," assignment)*
-assignment     → IDENTIFIER "=" assignment | conditional
-conditional    → equality ("?" comma ":" conditional)?
-equality       → comparison (("==" | "!=" comparison )*
-comparison     → term ((">" | ">=" | "<" | "<=") term )*
-term           → factor (("+" | "-") factor )*
-factor         → unary (("*" | "/") unary )*
-unary          → ("-" | "!") unary | primary
+expression     → comma ;
+comma          → assignment ( "," assignment )* ;
+assignment     → IDENTIFIER "=" assignment | conditional ;
+conditional    → logic_or ( "?" comma ":" conditional )? ;
+logic_or       → logic_and ( "or" logic_and )* ;
+logic_and      → equality ( "and" equality )* ;
+equality       → comparison ( ("==" | "!=" comparison )* ;
+comparison     → term ( (">" | ">=" | "<" | "<=" ) term )* ;
+term           → factor ( ( "+" | "-" ) factor )* ;
+factor         → unary ( ( "*" | "/" ) unary )* ;
+unary          → ( "-" | "!") unary | call ;
+call           → primary "(" arguments? ")" ;
 primary        → NUMBER | STRING | "true" | "false" | "nil" |
                  "(" expression ")" | IDENTIFIER
 // error productions
                 "," comma |
-                ("==", "!=) equality |
-                (">" | ">=" | "<" | "<=") comparison |
+                ( "==", "!=" ) equality |
+                ( ">" | ">=" | "<" | "<=" ) comparison |
                 "+" term |
-                ("*" | "/") factor
+                ( "*" | "/" ) factor ;
+
+arguments      → expression ("," expression )* ;
 
 // NOTE: assignment in C++ is in the same group as the Tenary
  */
@@ -55,14 +69,18 @@ public class GenerateAst {
                 "Unary       : Token operator, Expr expression",
                 "Binary      : Expr left, Token operator, Expr right",
                 "Conditional : Expr condition, Expr then, Expr otherwise",
+                "Logical     : Expr left, Token operator, Expr right",
                 "Identifier  : Token name",
-                "Assign      : Token name, Expr value"
+                "Assign      : Token name, Expr value",
+                "Call        : Expr callee, Token paren, List<Expr> arguments"
                 ));
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Var         : Token name, Expr initializer",
                 "Expression  : Expr expression",
                 "Print       : Expr expression",
-                "Block       : List<Stmt> statements"
+                "Block       : List<Stmt> statements",
+                "If          : Expr condition, Stmt then, Stmt otherwise",
+                "While       : Expr condition, Stmt body"
 
         ));
     }

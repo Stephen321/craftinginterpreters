@@ -1,5 +1,6 @@
 package main.java.com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static main.java.com.craftinginterpreters.lox.TokenType.*;
@@ -7,7 +8,22 @@ import static main.java.com.craftinginterpreters.lox.TokenType.*;
 class Interpreter implements Expr.Visitor<Object>,
                              Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    private final Environment globals = new Environment();
+    private Environment environment = new Environment(globals);
+
+    Interpreter() {
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+        });
+    }
 
     void interpret(List<Stmt> statements) {
         try {
@@ -61,7 +77,7 @@ class Interpreter implements Expr.Visitor<Object>,
                 return (double)left + (double)right;
             }
             if (left instanceof String && right instanceof String) {
-               return (String)left + (String)right;
+               return left + (String)right;
             }
             throw new RuntimeError(expr.operator, "Operands must both be numbers or strings");
         }
@@ -71,6 +87,10 @@ class Interpreter implements Expr.Visitor<Object>,
             case MINUS ->  (double)left - (double)right;
             case SLASH -> (double)left / (double)right;
             case STAR -> (double)left * (double)right;
+            case GREATER -> (double)left > (double)right;
+            case GREATER_EQUAL -> (double)left >= (double)right;
+            case LESS -> (double)left < (double)right;
+            case LESS_EQUAL -> (double)left <= (double)right;
             // never reached
             default -> null;
         };
@@ -84,6 +104,24 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+
+        if (expr.operator.type == OR) {
+            if (isTruthy(left)) {
+                return left;
+            }
+        }
+        else {
+            if (!isTruthy(left)) {
+                return left;
+            }
+        }
+
+        return evaluate(expr.right);
+    }
+
+    @Override
     public Object visitIdentifierExpr(Expr.Identifier expr) {
         return environment.get(expr.name);
     }
@@ -93,6 +131,28 @@ class Interpreter implements Expr.Visitor<Object>,
         Object value = evaluate(expr.value);
         environment.assign(expr.name, value);
         return value;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof LoxCallable function)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes");
+        }
+
+        if (arguments.size() != function.arity()) {
+            throw  new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size());
+        }
+
+        return function.call(this, arguments);
     }
 
     private Object evaluate(Expr expr) {
@@ -158,6 +218,26 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        Object condition = evaluate(stmt.condition);
+        if (isTruthy(condition)) {
+            execute(stmt.then);
+        }
+        else if (stmt.otherwise != null) {
+            execute(stmt.otherwise);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+        return null;
+    }
+
+    @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
         if (stmt.initializer != null) {
@@ -184,7 +264,4 @@ class Interpreter implements Expr.Visitor<Object>,
             this.environment = previous;
         }
     }
-
-
-
 }

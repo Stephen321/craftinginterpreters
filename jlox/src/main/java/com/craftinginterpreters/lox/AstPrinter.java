@@ -1,6 +1,7 @@
 package main.java.com.craftinginterpreters.lox;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,28 +40,33 @@ class AstPrinter implements Expr.Visitor<String>,
     }
 
     @Override
-    public String visitLiteralExpr(Expr.Literal literal) {
-        return literal.value.toString();
+    public String visitLiteralExpr(Expr.Literal expr) {
+        return expr.value.toString();
     }
 
     @Override
-    public String visitGroupingExpr(Expr.Grouping grouping) {
-        return parenthesize("group", grouping.expression);
+    public String visitGroupingExpr(Expr.Grouping expr) {
+        return parenthesize("group", expr.expression);
     }
 
     @Override
-    public String visitUnaryExpr(Expr.Unary unary) {
-        return parenthesize(unary.operator.lexume, unary.expression);
+    public String visitUnaryExpr(Expr.Unary expr) {
+        return parenthesize(expr.operator.lexume, expr.expression);
     }
 
     @Override
-    public String visitBinaryExpr(Expr.Binary binary) {
-        return parenthesize(binary.operator.lexume, binary.left, binary.right);
+    public String visitBinaryExpr(Expr.Binary expr) {
+        return parenthesize(expr.operator.lexume, expr.left, expr.right);
     }
 
     @Override
     public String visitConditionalExpr(Expr.Conditional conditional) {
         return parenthesize("?", conditional.condition, conditional.then, conditional.otherwise);
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return parenthesize(expr.operator.lexume, expr.left, expr.right);
     }
 
     @Override
@@ -71,6 +77,13 @@ class AstPrinter implements Expr.Visitor<String>,
     @Override
     public String visitAssignExpr(Expr.Assign expr) {
         return parenthesize("= " + expr.name.lexume, expr.value);
+    }
+
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        List<Expr> exprs = new ArrayList<>(expr.arguments);
+        exprs.addFirst(expr.callee);
+        return parenthesize("= call", expr.arguments.toArray(new Expr[0]));
     }
 
     private String parenthesize(String name, Expr... exprs) {
@@ -109,6 +122,23 @@ class AstPrinter implements Expr.Visitor<String>,
         }
         builder.append("\n end block}>");
         return builder.toString();
+    }
+
+    @Override
+    public String visitIfStmt(Stmt.If stmt) {
+        String res = "<if (" + parenthesize("cond", stmt.condition) + ") "+
+                "<then " +  stmt.then.accept(this) + " ;>";
+        if (stmt.otherwise != null) {
+
+            res += "<else " +  stmt.otherwise.accept(this) + " ;>";
+        }
+        return res;
+    }
+
+    @Override
+    public String visitWhileStmt(Stmt.While stmt) {
+        return "<while (" + parenthesize("cond", stmt.condition) + ")\n" +
+                stmt.body.accept(this);
     }
 
     private String bracketize(String name, Expr expr) {
