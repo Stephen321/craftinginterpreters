@@ -15,16 +15,20 @@ Grammar
 
 // statements
 program        → declaration* "EOF" ;
-declaration    → varDecl | statement ;
-statement      → exprStmt | printStmt | blockStmt | ifStmt | whileStmt | forStmt;
+declaration    → funDecl | varDecl | statement ;
+statement      → exprStmt | printStmt | blockStmt | ifStmt |
+                 whileStmt | forStmt | returnStmt;
 
+funDecl        → "fun" function ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 blockStmt      → "{" declaration* "}" ;
 ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 whileStmt      →  "while" "(" expression ")" statement ;
 forStmt        →  "for" "(" ( varDecl | exprStmt | ";") expression? ";" expression? ")" statement ;
+returnStmt     →  "return" expression? ";" ;
 
 
 
@@ -50,7 +54,10 @@ primary        → NUMBER | STRING | "true" | "false" | "nil" |
                 "+" term |
                 ( "*" | "/" ) factor ;
 
-arguments      → expression ("," expression )* ;
+// NOTE: I changed to assignment instead of "expression". wan't to skip "comma"
+arguments      → assignment ("," assignment )* ;
+function       → IDENTIFIER "(" parameters? ")" block ;
+parameters     → IDENTIFIER ("," IDENTIFIER )* ;
 
 // NOTE: assignment in C++ is in the same group as the Tenary
  */
@@ -80,7 +87,9 @@ public class GenerateAst {
                 "Print       : Expr expression",
                 "Block       : List<Stmt> statements",
                 "If          : Expr condition, Stmt then, Stmt otherwise",
-                "While       : Expr condition, Stmt body"
+                "While       : Expr condition, Stmt body",
+                "Function    : Token name, List<Token> params, List<Stmt> body",
+                "Return      : Token keyword, Expr value"
 
         ));
     }

@@ -8,8 +8,8 @@ import static main.java.com.craftinginterpreters.lox.TokenType.*;
 class Interpreter implements Expr.Visitor<Object>,
                              Stmt.Visitor<Void> {
 
-    private final Environment globals = new Environment();
-    private Environment environment = new Environment(globals);
+    final Environment globals = new Environment();
+    private Environment environment = globals;
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -238,6 +238,22 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.define(stmt.name.lexume, function);
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null) {
+            value = evaluate(stmt.value);
+        }
+        throw new Return(value);
+    }
+
+    @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
         if (stmt.initializer != null) {
@@ -252,7 +268,7 @@ class Interpreter implements Expr.Visitor<Object>,
         stmt.accept(this);
     }
 
-    private void executeBlock(List<Stmt> statements, Environment environment) {
+    void executeBlock(List<Stmt> statements, Environment environment) {
         Environment previous = this.environment;
         try {
             this.environment = environment;

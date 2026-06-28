@@ -29,6 +29,9 @@ class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(FUN)) {
+                return funDecl();
+            }
             if (match(VAR)) {
                 return varDecl();
             }
@@ -56,7 +59,36 @@ class Parser {
         if (match(FOR)) {
             return forStatement();
         }
+        if (match(RETURN)) {
+            return returnStatement();
+        }
         return expressionStatement();
+    }
+
+    private Stmt funDecl() {
+        return function("function");
+    }
+
+    private Stmt function(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name");
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name");
+
+        List<Token> params = new ArrayList<>();
+
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (params.size() >= 255) {
+                    error(peek(), "Can't have more than 255 arguments");
+                }
+                params.add(consume(IDENTIFIER, "Expect parameter name"));
+            } while (match(COMMA));
+        }
+
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, params, body);
     }
 
     private Stmt varDecl() {
@@ -165,6 +197,19 @@ class Parser {
 
         return body;
     }
+    
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after return value");
+
+        return new Stmt.Return(keyword, value);
+    }
+
 
     private List<Stmt> block() {
         List<Stmt> statements = new ArrayList<>();
@@ -305,6 +350,7 @@ class Parser {
 
         // TODO: to be explained why while(True) instead of while(match(LEFT_PAREN))
         while (true) {
+            // "arguments" rule
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
             }
@@ -323,7 +369,7 @@ class Parser {
                 if (arguments.size() >= 255) {
                     error(peek(), "Can't have more than 255 arguments");
                 }
-                arguments.add(expression());
+                arguments.add(assignment());
             } while (match(COMMA));
         }
         Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments");
