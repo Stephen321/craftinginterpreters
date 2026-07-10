@@ -77,7 +77,7 @@ public class GenerateAst {
                 "Binary      : Expr left, Token operator, Expr right",
                 "Conditional : Expr condition, Expr then, Expr otherwise",
                 "Logical     : Expr left, Token operator, Expr right",
-                "Identifier  : Token name",
+                "Variable  : Token name",
                 "Assign      : Token name, Expr value",
                 "Call        : Expr callee, Token paren, List<Expr> arguments"
                 ));

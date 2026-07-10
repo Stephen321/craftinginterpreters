@@ -122,7 +122,7 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
-    public Object visitIdentifierExpr(Expr.Identifier expr) {
+    public Object visitVariableExpr(Expr.Variable expr) {
         return environment.get(expr.name);
     }
 

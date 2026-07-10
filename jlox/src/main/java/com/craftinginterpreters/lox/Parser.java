@@ -242,8 +242,8 @@ class Parser {
         if (match(EQUAL)) {
             Token equals = previous();
 
-            if (expr instanceof Expr.Identifier identifier) {
-                Token name = identifier.name;
+            if (expr instanceof Expr.Variable variable) {
+                Token name = variable.name;
                 Expr value = assignment();
                 return new Expr.Assign(name, value);
             }
@@ -391,14 +391,14 @@ class Parser {
             return new Expr.Literal(previous().literal);
         }
 
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
+        }
+
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression");
             return new Expr.Grouping(expr);
-        }
-
-        if (match(IDENTIFIER)) {
-            return new Expr.Identifier(previous());
         }
 
         // error productions/
