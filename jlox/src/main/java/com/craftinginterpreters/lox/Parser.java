@@ -33,7 +33,7 @@ class Parser {
                 return funDecl();
             }
             if (match(VAR)) {
-                return varDecl();
+                return varDeclaration();
             }
             return statement();
         }
@@ -91,7 +91,7 @@ class Parser {
         return new Stmt.Function(name, params, body);
     }
 
-    private Stmt varDecl() {
+    private Stmt varDeclaration() {
         Token name = consume(IDENTIFIER, "Expect variable name");
         Expr initializer = null;
         if (match(EQUAL)) {
@@ -144,7 +144,7 @@ class Parser {
             initializer = null;
         }
         else if (match(VAR)) {
-            initializer = varDecl();
+            initializer = varDeclaration();
         }
         else {
             initializer = expressionStatement();
