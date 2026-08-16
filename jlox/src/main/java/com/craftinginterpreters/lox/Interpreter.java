@@ -1,7 +1,10 @@
 package main.java.com.craftinginterpreters.lox;
 
+import javax.naming.directory.Attributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static main.java.com.craftinginterpreters.lox.TokenType.*;
 
@@ -10,6 +13,7 @@ class Interpreter implements Expr.Visitor<Object>,
 
     final Environment globals = new Environment();
     private Environment environment = globals;
+    private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -49,7 +53,7 @@ class Interpreter implements Expr.Visitor<Object>,
 
     @Override
     public Object visitUnaryExpr(Expr.Unary expr) {
-        Object right = evaluate(expr.expression);
+        Object right = evaluate(expr.right);
         return switch (expr.operator.type) {
             case MINUS -> {
                 checkNumberOperand(expr.operator, right);
@@ -279,5 +283,9 @@ class Interpreter implements Expr.Visitor<Object>,
         finally {
             this.environment = previous;
         }
+    }
+
+    public void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
     }
 }
