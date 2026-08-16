@@ -124,6 +124,17 @@ class AstPrinter implements Expr.Visitor<String>,
     }
 
     @Override
+    public String visitClassStmt(Stmt.Class stmt) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<{ class " + stmt.name.lexume + " - ");
+        for (Stmt statement : stmt.methods) {
+            builder.append("\n" + statement.accept(this));
+        }
+        builder.append("\n end block}>");
+        return builder.toString();
+    }
+
+    @Override
     public String visitIfStmt(Stmt.If stmt) {
         String res = "<if (" + parenthesize("cond", stmt.condition) + ") "+
                 "<then " +  stmt.then.accept(this) + " ;>";

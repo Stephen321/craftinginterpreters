@@ -15,10 +15,12 @@ Grammar
 
 // statements
 program        → declaration* "EOF" ;
-declaration    → funDecl | varDecl | statement ;
+declaration    → classDecl | funDecl | varDecl | statement ;
 statement      → exprStmt | printStmt | blockStmt | ifStmt |
                  whileStmt | forStmt | returnStmt;
 
+
+classDecl      → "class" IDENTIFIER "{" function* "}" ;
 funDecl        → "fun" function ;
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
@@ -86,6 +88,7 @@ public class GenerateAst {
                 "Expression  : Expr expression",
                 "Print       : Expr expression",
                 "Block       : List<Stmt> statements",
+                "Class       : Token name, List<Stmt.Function> methods",
                 "If          : Expr condition, Stmt then, Stmt otherwise",
                 "While       : Expr condition, Stmt body",
                 "Function    : Token name, List<Token> params, List<Stmt> body",

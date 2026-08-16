@@ -241,6 +241,14 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexume, null);
+        LoxClass klass = new LoxClass(stmt.name.lexume);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+
+    @Override
     public Void visitIfStmt(Stmt.If stmt) {
         Object condition = evaluate(stmt.condition);
         if (isTruthy(condition)) {
