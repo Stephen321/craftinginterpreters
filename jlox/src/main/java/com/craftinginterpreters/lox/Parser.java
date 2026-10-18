@@ -366,10 +366,15 @@ class Parser {
         Expr expr = primary();
 
         // TODO: to be explained why while(True) instead of while(match(LEFT_PAREN))
+        // NOTE: 12.4.1 - ah so we can do properties
         while (true) {
             // "arguments" rule
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
+            }
+            else if (match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expect property name after '.'");
+                expr = new Expr.Get(expr, name);
             }
             else {
                 break;

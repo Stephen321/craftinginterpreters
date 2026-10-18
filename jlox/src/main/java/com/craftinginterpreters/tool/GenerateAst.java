@@ -46,7 +46,7 @@ comparison     → term ( (">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "+" | "-" ) factor )* ;
 factor         → unary ( ( "*" | "/" ) unary )* ;
 unary          → ( "-" | "!") unary | call ;
-call           → primary "(" arguments? ")" ;
+call           → primary ( "(" arguments? ")" | "." IDENTIFIER )*;
 primary        → NUMBER | STRING | "true" | "false" | "nil" |
                  "(" expression ")" | IDENTIFIER
 // error productions
@@ -79,9 +79,10 @@ public class GenerateAst {
                 "Binary      : Expr left, Token operator, Expr right",
                 "Conditional : Expr condition, Expr then, Expr otherwise",
                 "Logical     : Expr left, Token operator, Expr right",
-                "Variable  : Token name",
+                "Variable    : Token name",
                 "Assign      : Token name, Expr value",
-                "Call        : Expr callee, Token paren, List<Expr> arguments"
+                "Call        : Expr callee, Token paren, List<Expr> arguments",
+                "Get         : Expr object, Token name"
                 ));
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Var         : Token name, Expr initializer",
