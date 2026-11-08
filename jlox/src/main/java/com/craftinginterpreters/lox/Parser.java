@@ -258,11 +258,14 @@ class Parser {
 
         if (match(EQUAL)) {
             Token equals = previous();
+            Expr value = assignment();
 
             if (expr instanceof Expr.Variable variable) {
                 Token name = variable.name;
-                Expr value = assignment();
                 return new Expr.Assign(name, value);
+            }
+            else if (expr instanceof Expr.Get get) {
+                return new Expr.Set(get.object, get.name, value);
             }
 
             // NOTE: reports, doesn't throw as not in a panic state where we need to sync

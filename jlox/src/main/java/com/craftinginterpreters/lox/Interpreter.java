@@ -177,6 +177,18 @@ class Interpreter implements Expr.Visitor<Object>,
         throw new RuntimeError(expr.name, "Only instances have properties");
     }
 
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+
+        if (!(object instanceof LoxInstance)) {
+           throw new RuntimeError(expr.name, "Only instances have fields");
+        }
+        Object value = evaluate(expr.value);
+        ((LoxInstance) object).set(expr.name, value);
+        return null;
+    }
+
     private Object evaluate(Expr expr) {
         return expr.accept(this);
     }

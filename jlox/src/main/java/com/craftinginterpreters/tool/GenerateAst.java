@@ -82,7 +82,8 @@ public class GenerateAst {
                 "Variable    : Token name",
                 "Assign      : Token name, Expr value",
                 "Call        : Expr callee, Token paren, List<Expr> arguments",
-                "Get         : Expr object, Token name"
+                "Get         : Expr object, Token name",
+                "Set         : Expr object, Token name, Expr value"
                 ));
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Var         : Token name, Expr initializer",
