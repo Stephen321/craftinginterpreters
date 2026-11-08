@@ -37,7 +37,7 @@ returnStmt     →  "return" expression? ";" ;
 // expressions
 expression     → comma ;
 comma          → assignment ( "," assignment )* ;
-assignment     → IDENTIFIER "=" assignment | conditional ;
+assignment     → ( call "." )? IDENTIFIER "=" assignment | conditional ;
 conditional    → logic_or ( "?" comma ":" conditional )? ;
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;

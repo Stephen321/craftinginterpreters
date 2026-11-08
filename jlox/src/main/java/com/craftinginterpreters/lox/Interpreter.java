@@ -1,6 +1,5 @@
 package main.java.com.craftinginterpreters.lox;
 
-import javax.naming.directory.Attributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -264,7 +263,14 @@ class Interpreter implements Expr.Visitor<Object>,
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         environment.define(stmt.name.lexume, null);
-        LoxClass klass = new LoxClass(stmt.name.lexume);
+
+        Map<String, LoxFunction> methods = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            LoxFunction function = new LoxFunction(method, environment);
+            methods.put(method.name.lexume, function);
+        }
+
+        LoxClass klass = new LoxClass(stmt.name.lexume, methods);
         environment.assign(stmt.name, klass);
         return null;
     }
